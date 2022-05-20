@@ -3,6 +3,7 @@ import time
 import socket
 import threading
 import signal
+import cgi
 
 class WebServer(object):
     def __init__(self, port=8080):
@@ -44,14 +45,19 @@ class WebServer(object):
 
     def socket_listen(self):
         self.socket.listen(5)
-        while True:
+        laConchaDeTuPadre = True
+        while laConchaDeTuPadre:
+            print("socket_listener")
+            
             (client, addr) = self.socket.accept()
-            client.settimeout(99)
+            print('este es el client desde socket: ', client)
+            client.settimeout(20)
             print(f'Received connection from {client}:{addr}')
             threading.Thread(target=self.handle_client, args=(client, addr)).start()
 
     def handle_client(self, client, address):
-        PACKET_SIZE = 1024
+        PACKET_SIZE = 1024 * 1024 * 1024
+        laConchaDeTuMadre = True
         while True:
             print('Client ', client)
             data = client.recv(PACKET_SIZE).decode()
@@ -89,11 +95,19 @@ class WebServer(object):
                 client.close()
                 break
             elif request_method == 'POST':
-                pass
+                file_requested = data.split(' ')[1]
+                print(file_requested)
+
+                
+                response_header = self.generate_headers(200)
+                response = response_header.encode()
+                client.send(response)
+                client.close()
+                break
 
             else:
                 print(f"Unknown HTTP request method: {request_method}")
-
+        print("nos salimos handle_client")
 
 def shutdownServer(sig, unused):
     server.shutdown()
